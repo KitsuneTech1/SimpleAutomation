@@ -1,0 +1,230 @@
+# ===============================================
+# SimpleAutomation Configuration
+# ===============================================
+
+# General Settings
+general:
+  # Check interval for machines (in ticks, 20 ticks = 1 second)
+  tick-interval: 10
+  # Maximum machines per chunk
+  max-machines-per-chunk: 16
+  # How often (seconds) to autosave machine data in the background. Only writes when
+  # something changed. Set to 0 to disable and rely on save-on-shutdown only.
+  autosave-interval: 60
+  # Enable debug messages
+  debug: false
+
+# ===============================================
+# PROTECTION / GRIEF PREVENTION
+# ===============================================
+# When true, a machine may only break or place a block where its OWNER has build
+# rights. Access is checked by firing a dummy block event as the owner and treating
+# a cancellation from a claim/protection plugin (WorldGuard, GriefPrevention, Towny,
+# ...) as denied. This stops quarries and miners chewing through other players'
+# claims and chests. Set to false to let machines affect any block.
+require-build-access: true
+
+# ===============================================
+# ECONOMY (optional, needs Vault)
+# ===============================================
+economy:
+  # When true AND a Vault economy is installed, placing a machine charges its
+  # per-machine place-cost (below). When false (default) machines cost only their
+  # crafting materials. If this is enabled but no economy plugin is present, the
+  # charge is skipped and a warning is logged.
+  enabled: false
+
+# ===============================================
+# QUARRY SETTINGS
+# ===============================================
+quarry:
+  # Base mining speed (ticks between each block mined)
+  base-speed: 40
+  # Default mining area (width x depth)
+  default-area: 3
+  # Maximum depth to mine (from quarry position)
+  max-depth: 64
+  # Power mode: FUEL only (Redstone support removed as requested)
+  power-mode: FUEL
+  # Money charged to place this machine when economy.enabled is true
+  place-cost: 500.0
+  
+  # Upgrade costs (item:amount)
+  upgrades:
+    speed:
+      level-1: IRON_INGOT:16
+      level-2: GOLD_INGOT:8
+      level-3: GOLD_INGOT:16
+      level-4: DIAMOND:4
+      level-5: NETHERITE_INGOT:1
+    area:
+      level-1: IRON_BLOCK:2
+      level-2: GOLD_BLOCK:2
+      level-3: GOLD_BLOCK:4
+      level-4: DIAMOND_BLOCK:1
+      level-5: DIAMOND_BLOCK:2
+      level-6: NETHERITE_BLOCK:1
+    fortune:
+      level-1: EMERALD:16
+      level-2: EMERALD_BLOCK:2
+      level-3: EMERALD_BLOCK:4
+    silk-touch:
+      level-1: DIAMOND_BLOCK:4
+    efficiency:
+      level-1: REDSTONE_BLOCK:4
+      level-2: REDSTONE_BLOCK:8
+      level-3: LAPIS_BLOCK:4
+    void-filter:
+      level-1: OBSIDIAN:8
+      
+  # Blocks destroyed by void filter
+  void-filter-blocks:
+    - COBBLESTONE
+    - DIRT
+    - GRAVEL
+    - STONE
+    - ANDESITE
+    - DIORITE
+    - GRANITE
+    - DEEPSLATE
+    - COBBLED_DEEPSLATE
+    - TUFF
+    - NETHERRACK
+
+# ===============================================
+# CONVEYOR BELT SETTINGS
+# ===============================================
+conveyor:
+  # Speed of item movement (blocks per second)
+  speed: 2.0
+  # Maximum items on a single belt
+  max-items-per-belt: 8
+  # Pickup delay for items on belt (ticks)
+  pickup-delay: 40
+  # Money charged to place this machine when economy.enabled is true
+  place-cost: 50.0
+
+  # Upgrade costs (item:amount). The conveyor only exposes the Speed upgrade in its
+  # GUI, so only that branch is defined. Without this section conveyor upgrades
+  # resolved to a null cost and could not be purchased.
+  upgrades:
+    speed:
+      level-1: IRON_INGOT:16
+      level-2: GOLD_INGOT:8
+      level-3: DIAMOND:2
+      level-4: DIAMOND:4
+      level-5: NETHERITE_INGOT:1
+
+# ===============================================
+# TREE FARMER SETTINGS
+# ===============================================
+tree-farmer:
+  # Check interval for grown trees (ticks)
+  check-interval: 100
+  # Base harvest speed (ticks per log)
+  harvest-speed: 5
+  # Maximum tree height to handle
+  max-tree-height: 32
+  # Money charged to place this machine when economy.enabled is true
+  place-cost: 250.0
+  
+  upgrades:
+    speed:
+      level-1: IRON_INGOT:16
+      level-2: GOLD_INGOT:8
+      level-3: DIAMOND:2
+      level-4: DIAMOND:4
+      level-5: NETHERITE_INGOT:1
+    range:
+      level-1: GOLD_INGOT:8
+      level-2: DIAMOND:2
+      level-3: DIAMOND:4
+    multi-tree:
+      level-1: DIAMOND_BLOCK:1
+    leaf-decay:
+      level-1: SHEARS:1
+
+# ===============================================
+# CROP FARMER SETTINGS
+# ===============================================
+crop-farmer:
+  # Check interval for mature crops (ticks)
+  check-interval: 60
+  # Farming area radius
+  default-radius: 4
+  # Maximum farming area radius
+  max-radius: 9
+  # Money charged to place this machine when economy.enabled is true
+  place-cost: 250.0
+  
+  upgrades:
+    speed:
+      level-1: IRON_INGOT:16
+      level-2: GOLD_INGOT:8
+      level-3: DIAMOND:2
+      level-4: DIAMOND:4
+      level-5: NETHERITE_INGOT:1
+    range:
+      level-1: GOLD_INGOT:8
+      level-2: DIAMOND:2
+      level-3: DIAMOND:4
+
+# ===============================================
+# BLOCK MINER SETTINGS
+# ===============================================
+block-miner:
+  # Base mining speed (ticks between each block mined)
+  base-speed: 20
+  # Power mode: FUEL only
+  power-mode: FUEL
+  # Money charged to place this machine when economy.enabled is true
+  place-cost: 300.0
+  
+  # Upgrade costs (item:amount)
+  upgrades:
+    speed:
+      level-1: IRON_INGOT:16
+      level-2: GOLD_INGOT:8
+      level-3: DIAMOND:2
+      level-4: DIAMOND:4
+      level-5: NETHERITE_INGOT:1
+    fortune:
+      level-1: EMERALD:16
+      level-2: EMERALD_BLOCK:2
+      level-3: EMERALD_BLOCK:4
+    silk-touch:
+      level-1: DIAMOND_BLOCK:4
+    efficiency:
+      level-1: REDSTONE_BLOCK:4
+      level-2: REDSTONE_BLOCK:8
+      level-3: LAPIS_BLOCK:4
+
+# ===============================================
+# WRENCH SETTINGS
+# ===============================================
+wrench:
+  # Allow picking up machines with upgrades intact
+  preserve-upgrades: true
+
+# ===============================================
+# PARTICLE SETTINGS
+# ===============================================
+particles:
+  enabled: true
+  # Particle density (1 = normal, 2 = double, 0.5 = half)
+  density: 1.0
+
+# ===============================================
+# MESSAGES
+# ===============================================
+messages:
+  prefix: "&8[&6SimpleAutomation&8] "
+  machine-placed: "&aPlaced %machine%!"
+  machine-removed: "&cRemoved %machine%!"
+  no-permission: "&cYou don't have permission to do that!"
+  insufficient-funds: "&cYou need &f%cost%&c to place a %machine%!"
+  no-build-access: "&cThat machine cannot build where its owner has no permission!"
+  upgrade-success: "&aUpgrade applied! %upgrade% is now level %level%"
+  upgrade-fail: "&cNot enough materials for this upgrade!"
+  fuel-empty: "&eYour %machine% is out of fuel!"
+  output-full: "&eYour %machine%'s output is full!"

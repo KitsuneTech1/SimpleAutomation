@@ -1,0 +1,25 @@
+name: SimpleAutomation
+version: ${project.version}
+main: com.simpleautomation.SimpleAutomation
+api-version: '26.1.2'
+author: SimpleAutomation
+description: A polished automation plugin with Quarries, Conveyor Belts, and Farmers
+softdepend: [Vault]
+
+commands:
+  automation:
+    description: Main automation plugin command
+    usage: /<command> [give|reload]
+    permission: simpleautomation.admin
+    aliases: [sa, auto]
+
+permissions:
+  simpleautomation.admin:
+    description: Admin access to automation commands
+    default: op
+  simpleautomation.use:
+    description: Permission to use automation machines
+    default: true
+  simpleautomation.craft:
+    description: Permission to craft automation machines
+    default: true
