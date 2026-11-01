@@ -5,13 +5,15 @@
 Placeable machines that mine, farm, and move items for you, with fuel and an upgrade tree.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21-brightgreen.svg)
+![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-brightgreen.svg)
 ![Spigot](https://img.shields.io/badge/Spigot%2FPaper-API-orange.svg)
-![Java](https://img.shields.io/badge/Java-21-blue.svg)
+![Java](https://img.shields.io/badge/Java-25-blue.svg)
 
 ## What it does
 
 SimpleAutomation adds five placeable machines (Quarry, Conveyor Belt, Tree Farmer, Crop Farmer, Block Miner) plus a Wrench for picking them back up. Machines run on fuel, tick on a configurable interval, and can be upgraded with vanilla materials for more speed, range, fortune, silk touch, and other effects. Machine state is saved between server restarts.
+
+Quarries, Block Miners, Tree Farmers, and Crop Farmers take fuel from an adjacent inventory and send mined or harvested items to an adjacent inventory. Conveyor Belts move item entities and can extract items from adjacent inventories.
 
 ## Features
 
@@ -61,21 +63,21 @@ Key options in `config.yml`:
 
 ### What you need
 
-- A Spigot or Paper server on Minecraft 1.21. Get Paper at https://papermc.io/downloads . This plugin will not work on vanilla Minecraft or on Realms.
-- Java 21. Get it at https://adoptium.net . Check what you have installed by typing `java -version` in a terminal.
+- A Paper server on Minecraft 26.1.2. Get Paper at https://papermc.io/downloads . This plugin will not work on vanilla Minecraft or on Realms.
+- Java 25. Get it at https://adoptium.net . Check what you have installed by typing `java -version` in a terminal.
 
 ### Step by step
 
-**Option A: download the jar (easiest)**
+**Option A: download a published jar**
 
-1. Go to the [v1.0.0 release page](https://github.com/KitsuneTech1/SimpleAutomation/releases/tag/v1.0.0) and download `SimpleAutomation-1.0.0.jar`, or grab it directly from [this download link](https://github.com/KitsuneTech1/SimpleAutomation/releases/download/v1.0.0/SimpleAutomation-1.0.0.jar).
+1. If a release has been published, open the [releases page](https://github.com/KitsuneTech1/SimpleAutomation/releases) and download the jar for the version you want.
 
 **Option B: build from source**
 
-1. Install a Java 21 JDK from https://adoptium.net if you don't already have one.
+1. Install a Java 25 JDK from https://adoptium.net if you don't already have one.
 2. Clone the repo: `git clone https://github.com/KitsuneTech1/SimpleAutomation.git`. If you don't use git, click "Code" then "Download ZIP" on the GitHub repo page and unzip it instead.
 3. Open a terminal in the project folder: `cd SimpleAutomation`.
-4. Run `mvn clean package`.
+4. Run `mvn -q package`.
 5. The jar comes out at `target/SimpleAutomation-1.0.0.jar`.
 
 **Both options finish the same way:**
@@ -88,8 +90,8 @@ It worked if the server console shows no errors on startup and `/automation` giv
 
 **Troubleshooting**
 
-- `UnsupportedClassVersionError` in the console: your server is running an older Java than 21. Install Java 21 from https://adoptium.net and make sure your server startup script points at it.
-- A warning about an unsupported or unknown API version, or the plugin not loading at all: your Spigot/Paper build is older than Minecraft 1.21. Update your server jar from https://papermc.io/downloads .
+- `UnsupportedClassVersionError` in the console: your server is running an older Java than 25. Install Java 25 from https://adoptium.net and make sure your server startup script points at it.
+- A warning about an unsupported or unknown API version, or the plugin not loading at all: your Paper build is older than Minecraft 26.1.2. Update your server jar from https://papermc.io/downloads .
 - `/automation` says "Unknown command": the jar isn't in `plugins/`, or the server wasn't fully restarted after you dropped it in. Double check the file landed in the right `plugins/` folder and do a full restart, not a reload.
 
 ## License

@@ -48,6 +48,13 @@ public class TreeFarmer extends Machine {
     public void tick() {
         tickCounter++;
 
+        if (!hasPower()) {
+            status = MachineStatus.NO_FUEL;
+            if (tickCounter % 4 == 0)
+                spawnStatusParticles();
+            return;
+        }
+
         int checkInterval = SimpleAutomation.getInstance().getConfig().getInt("tree-farmer.check-interval", 100);
         int harvestSpeed = SimpleAutomation.getInstance().getConfig().getInt("tree-farmer.harvest-speed", 5);
         int speedLevel = getUpgradeLevel(UpgradeType.SPEED);
@@ -56,8 +63,8 @@ public class TreeFarmer extends Machine {
         if (harvesting && !blocksToHarvest.isEmpty()) {
             status = MachineStatus.RUNNING;
 
-            if (tickCounter % harvestSpeed == 0) {
-                harvestNextBlock();
+            if (tickCounter % harvestSpeed == 0 && harvestNextBlock()) {
+                consumeFuel();
             }
 
             if (tickCounter % 4 == 0)
@@ -170,23 +177,23 @@ public class TreeFarmer extends Machine {
         playSound(Sound.BLOCK_WOOD_HIT, 0.5f, 0.8f);
     }
 
-    private void harvestNextBlock() {
+    private boolean harvestNextBlock() {
         if (blocksToHarvest.isEmpty()) {
             harvesting = false;
             replantSapling();
-            return;
+            return false;
         }
 
         Block block = blocksToHarvest.poll();
         Material type = block.getType();
 
         if (!LOG_MATERIALS.contains(type) && !LEAF_MATERIALS.contains(type)) {
-            return; // Block was already broken or changed
+            return false; // Block was already broken or changed
         }
 
         // Respect claims/protection: only harvest where the owner is allowed to build.
         if (!canAffect(block)) {
-            return;
+            return false;
         }
 
         Collection<ItemStack> drops = block.getDrops();
@@ -201,6 +208,7 @@ public class TreeFarmer extends Machine {
         playSound(Sound.BLOCK_WOOD_BREAK, 0.3f, 1.0f);
         block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5),
                 10, 0.3, 0.3, 0.3, 0, type.createBlockData());
+        return true;
     }
 
     private void replantSapling() {

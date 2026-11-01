@@ -70,4 +70,28 @@ class AutosaveTest {
         assertEquals(3, restored.getUpgradeLevel(UpgradeType.SPEED),
                 "Upgrade level was not persisted");
     }
+
+    @Test
+    void removingAnInvalidMachinePersistsAcrossRestart() {
+        WorldMock world = server.addSimpleWorld("world");
+        Location loc = new Location(world, 6, 64, 6);
+        world.getBlockAt(loc).setType(org.bukkit.Material.DROPPER);
+
+        MachineManager manager = plugin.getMachineManager();
+        Quarry quarry = new Quarry(loc, BlockFace.NORTH, UUID.randomUUID());
+        manager.addMachine(quarry);
+        manager.flush();
+
+        world.getBlockAt(loc).setType(org.bukkit.Material.AIR);
+        manager.tickAllMachines();
+
+        assertEquals(0, manager.getMachineCount(), "Invalid machine was not removed from memory");
+        assertTrue(manager.isDirty(), "Removing an invalid machine must mark saved state dirty");
+
+        manager.flush();
+        MachineManager reloaded = new MachineManager(plugin);
+        reloaded.loadMachines();
+        assertEquals(0, reloaded.getMachineCount(),
+                "An invalid machine was resurrected from stale saved data");
+    }
 }

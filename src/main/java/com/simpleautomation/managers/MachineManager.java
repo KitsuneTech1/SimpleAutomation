@@ -116,6 +116,7 @@ public class MachineManager {
             if (!machine.isValid()) {
                 iterator.remove();
                 locationIndex.remove(machine.getLocation().getBlock().getLocation());
+                markDirty();
                 continue;
             }
 

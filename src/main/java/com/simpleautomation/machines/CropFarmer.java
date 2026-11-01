@@ -41,6 +41,13 @@ public class CropFarmer extends Machine {
     public void tick() {
         tickCounter++;
 
+        if (!hasPower()) {
+            status = MachineStatus.NO_FUEL;
+            if (tickCounter % 4 == 0)
+                spawnStatusParticles();
+            return;
+        }
+
         int checkInterval = SimpleAutomation.getInstance().getConfig().getInt("crop-farmer.check-interval", 60);
         int speedLevel = getUpgradeLevel(UpgradeType.SPEED);
         int harvestDelay = Math.max(1, 3 - speedLevel);
@@ -48,8 +55,8 @@ public class CropFarmer extends Machine {
         if (!cropsToHarvest.isEmpty()) {
             status = MachineStatus.RUNNING;
 
-            if (tickCounter % harvestDelay == 0) {
-                harvestNextCrop();
+            if (tickCounter % harvestDelay == 0 && harvestNextCrop()) {
+                consumeFuel();
             }
 
             if (tickCounter % 4 == 0)
@@ -116,11 +123,11 @@ public class CropFarmer extends Machine {
         return false;
     }
 
-    private void harvestNextCrop() {
+    private boolean harvestNextCrop() {
         if (harvestIndex >= cropsToHarvest.size()) {
             cropsToHarvest.clear();
             harvestIndex = 0;
-            return;
+            return false;
         }
 
         Block crop = cropsToHarvest.get(harvestIndex);
@@ -129,12 +136,12 @@ public class CropFarmer extends Machine {
         Material type = crop.getType();
 
         if (!isMatureCrop(crop)) {
-            return;
+            return false;
         }
 
         // Respect claims/protection: only harvest where the owner is allowed to build.
         if (!canAffect(crop)) {
-            return;
+            return false;
         }
 
         Collection<ItemStack> drops = crop.getDrops();
@@ -176,6 +183,7 @@ public class CropFarmer extends Machine {
                 5, 0.2, 0.1, 0.2, 0, type.createBlockData());
         crop.getWorld().spawnParticle(Particle.HAPPY_VILLAGER,
                 crop.getLocation().add(0.5, 0.5, 0.5), 2, 0.2, 0.2, 0.2, 0);
+        return true;
     }
 
     @Override
