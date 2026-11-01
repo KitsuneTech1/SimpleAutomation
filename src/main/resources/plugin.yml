@@ -9,7 +9,7 @@ softdepend: [Vault]
 commands:
   automation:
     description: Main automation plugin command
-    usage: /<command> [give|reload]
+    usage: /<command> [give|list|reload|save]
     permission: simpleautomation.admin
     aliases: [sa, auto]
 
