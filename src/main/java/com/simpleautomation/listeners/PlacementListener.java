@@ -96,7 +96,7 @@ public class PlacementListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST) // Use LOWEST to catch it before other things might drop it
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         // Ignore our own build-access probe events (fired by Machine.canAffect) so a probe
         // never trips the machine pickup/removal logic below.
@@ -108,10 +108,24 @@ public class PlacementListener implements Listener {
         Machine machine = plugin.getMachineManager().getMachineAt(block.getLocation());
 
         if (machine != null) {
+            Player player = event.getPlayer();
+
+            if (!player.hasPermission(USE_PERMISSION)) {
+                event.setCancelled(true);
+                sendConfigMessage(player, "messages.no-permission",
+                        "&cYou don't have permission to do that!", machine.getType());
+                return;
+            }
+
+            if (machine.getOwner() != null && !machine.getOwner().equals(player.getUniqueId())
+                    && !player.hasPermission(com.simpleautomation.commands.AutomationCommand.ADMIN_PERMISSION)) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You don't own this machine!");
+                return;
+            }
+
             // Cancel vanilla drops entirely to prevent duplication
             event.setDropItems(false);
-
-            Player player = event.getPlayer();
 
             // Drop custom machine item with ALL upgrades preserved
             ItemStack machineItem = WrenchItem.createUpgradedMachineItem(machine);

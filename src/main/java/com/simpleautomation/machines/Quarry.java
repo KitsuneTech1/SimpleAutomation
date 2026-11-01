@@ -42,6 +42,15 @@ public class Quarry extends Machine {
         if (initialized)
             return;
 
+        calculateBounds();
+
+        currentX = minX;
+        currentY = startY;
+        currentZ = minZ;
+        initialized = true;
+    }
+
+    private void calculateBounds() {
         int area = getArea();
         int halfArea = area / 2;
 
@@ -81,10 +90,6 @@ public class Quarry extends Machine {
         }
 
         startY = location.getBlockY() - 1;
-        currentX = minX;
-        currentY = startY;
-        currentZ = minZ;
-        initialized = true;
     }
 
     @Override
@@ -227,9 +232,15 @@ public class Quarry extends Machine {
 
     public void loadState(ConfigurationSection section) {
         super.loadBaseState(section);
-        this.currentX = section.getInt("currentX", minX);
-        this.currentY = section.getInt("currentY", startY);
-        this.currentZ = section.getInt("currentZ", minZ);
-        this.initialized = section.getBoolean("initialized", false);
+        boolean savedInitialized = section.getBoolean("initialized", false);
+        if (savedInitialized) {
+            calculateBounds();
+            this.currentX = section.getInt("currentX", minX);
+            this.currentY = section.getInt("currentY", startY);
+            this.currentZ = section.getInt("currentZ", minZ);
+            this.initialized = true;
+        } else {
+            this.initialized = false;
+        }
     }
 }
