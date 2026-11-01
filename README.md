@@ -1,8 +1,8 @@
 <p align="center"><a href="https://kitsunetechnologies.org/work"><img src="https://raw.githubusercontent.com/KitsuneTech1/.github/main/assets/kitsune-banner.svg" alt="Built by Kitsune Technologies" width="760"></a></p>
 
-# SimpleAutomation
+# Blockworks
 
-Placeable machines that mine, farm, and move items for you, with fuel and an upgrade tree.
+A Paper plugin that adds placeable, upgradeable automation machines including quarries, farms, and utility blocks.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-brightgreen.svg)
@@ -11,20 +11,20 @@ Placeable machines that mine, farm, and move items for you, with fuel and an upg
 
 ## What it does
 
-SimpleAutomation adds five placeable machines (Quarry, Conveyor Belt, Tree Farmer, Crop Farmer, Block Miner) plus a Wrench for picking them back up. Machines run on fuel, tick on a configurable interval, and can be upgraded with vanilla materials for more speed, range, fortune, silk touch, and other effects. Machine state is saved between server restarts.
+Blockworks adds five placeable machines: Quarry, Block Miner, Tree Farmer, Crop Farmer, and Conveyor Belt. Each runs on fuel and can be upgraded with vanilla materials for speed, range, fortune, silk touch, and other effects. Machines pull fuel and send output to adjacent inventories. Conveyor Belts move items along a line and can extract from nearby storage.
 
-Quarries, Block Miners, Tree Farmers, and Crop Farmers take fuel from an adjacent inventory and send mined or harvested items to an adjacent inventory. Conveyor Belts move item entities and can extract items from adjacent inventories.
+All machine placement and state persists across server restarts.
 
-## Features
+## Machines
 
-- **Quarry** - mines a configurable area and depth, upgradeable speed, area, fortune, silk touch, efficiency, and a void filter that discards junk blocks like cobblestone and dirt
-- **Block Miner** - mines the block directly in front of it, with speed, fortune, silk touch, and efficiency upgrades
-- **Tree Farmer** - chops and replants trees in range, with speed, range, multi-tree, and leaf decay upgrades
-- **Crop Farmer** - harvests and replants mature crops in a radius, with speed and range upgrades
-- **Conveyor Belt** - moves items along a line of belts
-- **Wrench** - picks machines up without losing their upgrade levels
-- Machine placement and state persist across restarts
-- Per-machine GUI for viewing status and applying upgrades
+- **Quarry** - mines a configurable area and depth with speed, area, fortune, silk touch, and efficiency upgrades. Includes a void filter to discard junk blocks.
+- **Block Miner** - mines the block in front of it. Upgradeable for speed, fortune, silk touch, and efficiency.
+- **Tree Farmer** - chops and replants trees in range. Upgradeable for speed, range, multi-tree, and leaf decay.
+- **Crop Farmer** - harvests and replants mature crops in a radius. Upgradeable for speed and range.
+- **Conveyor Belt** - moves items along a line. Can extract from adjacent inventories.
+- **Wrench** - picks machines up without losing upgrades.
+
+Each machine has a GUI to view status and apply upgrades.
 
 ## Commands
 
@@ -59,40 +59,34 @@ Key options in `config.yml`:
 - `particles.enabled`, `particles.density`
 - `messages.*` - all player-facing message strings, with color codes
 
-## Install
+## Quick start
 
-### What you need
+You need:
+- A Paper server running Minecraft 26.1.2 (https://papermc.io/downloads). Does not work on vanilla Minecraft or Realms.
+- Java 25 JDK (https://adoptium.net). Check with `java -version`.
 
-- A Paper server on Minecraft 26.1.2. Get Paper at https://papermc.io/downloads . This plugin will not work on vanilla Minecraft or on Realms.
-- Java 25. Get it at https://adoptium.net . Check what you have installed by typing `java -version` in a terminal.
+Then choose:
 
-### Step by step
+**Option A: Download a prebuilt jar**
+1. Go to the [releases page](https://github.com/KitsuneTech1/SimpleAutomation/releases) and download the jar.
+2. Drop it into your server's `plugins/` folder.
+3. Restart the server (full restart, not `/reload`).
+4. Run `/automation` in-game or console. If it responds, you're done.
 
-**Option A: download a published jar**
+**Option B: Build from source**
+1. Clone the repo: `git clone https://github.com/KitsuneTech1/SimpleAutomation.git` (or download and unzip the ZIP from GitHub).
+2. `cd SimpleAutomation`
+3. `mvn -q package`
+4. Copy `target/SimpleAutomation-1.0.0.jar` to your server's `plugins/` folder.
+5. Restart the server and run `/automation` to confirm.
 
-1. If a release has been published, open the [releases page](https://github.com/KitsuneTech1/SimpleAutomation/releases) and download the jar for the version you want.
-
-**Option B: build from source**
-
-1. Install a Java 25 JDK from https://adoptium.net if you don't already have one.
-2. Clone the repo: `git clone https://github.com/KitsuneTech1/SimpleAutomation.git`. If you don't use git, click "Code" then "Download ZIP" on the GitHub repo page and unzip it instead.
-3. Open a terminal in the project folder: `cd SimpleAutomation`.
-4. Run `mvn -q package`.
-5. The jar comes out at `target/SimpleAutomation-1.0.0.jar`.
-
-**Both options finish the same way:**
-
-1. Drop the jar into your server's `plugins/` folder.
-2. Restart the server. Don't use `/reload`, do a full stop and start. `config.yml` is generated on first run.
-3. Check the console for errors as it starts up, then run `/automation` in game or from the console (aliases `/sa` and `/auto` also work). If it responds with plugin output instead of "Unknown command," it's working.
-
-It worked if the server console shows no errors on startup and `/automation` gives you a real response instead of "Unknown command."
+The server will generate `config.yml` on first startup.
 
 **Troubleshooting**
 
-- `UnsupportedClassVersionError` in the console: your server is running an older Java than 25. Install Java 25 from https://adoptium.net and make sure your server startup script points at it.
-- A warning about an unsupported or unknown API version, or the plugin not loading at all: your Paper build is older than Minecraft 26.1.2. Update your server jar from https://papermc.io/downloads .
-- `/automation` says "Unknown command": the jar isn't in `plugins/`, or the server wasn't fully restarted after you dropped it in. Double check the file landed in the right `plugins/` folder and do a full restart, not a reload.
+- `UnsupportedClassVersionError`: Your server is running an older Java. Install Java 25 from https://adoptium.net and update your startup script.
+- Plugin doesn't load or API version warning: Your Paper build is too old. Update from https://papermc.io/downloads.
+- `/automation` says "Unknown command": The jar isn't in `plugins/` or the server wasn't fully restarted. Check the file is in the right folder and do a full restart.
 
 ## License
 
