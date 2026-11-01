@@ -32,11 +32,16 @@ public class WrenchItem {
         return new NamespacedKey(SimpleAutomation.getInstance(), "upgrades");
     }
 
+    private static NamespacedKey wrenchKey() {
+        return new NamespacedKey(SimpleAutomation.getInstance(), "wrench");
+    }
+
     public static ItemStack createWrench() {
         ItemStack wrench = new ItemStack(Material.IRON_HOE);
         ItemMeta meta = wrench.getItemMeta();
 
         meta.setDisplayName(WRENCH_NAME);
+        meta.getPersistentDataContainer().set(wrenchKey(), PersistentDataType.BYTE, (byte) 1);
 
         List<String> lore = new ArrayList<>();
         lore.add("");
@@ -58,13 +63,17 @@ public class WrenchItem {
         if (item == null || item.getType() != Material.IRON_HOE) {
             return false;
         }
-        if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
+        if (!item.hasItemMeta()) {
             return false;
         }
-        return item.getItemMeta().getDisplayName().equals(WRENCH_NAME);
+        return item.getItemMeta().getPersistentDataContainer().has(wrenchKey(), PersistentDataType.BYTE);
     }
 
     public static void pickupMachine(SimpleAutomation plugin, Player player, Machine machine) {
+        if (!machine.isValid()) {
+            plugin.getMachineManager().removeMachine(machine);
+            return;
+        }
         if (machine.getOwner() != null && !machine.getOwner().equals(player.getUniqueId())
                 && !player.hasPermission(AutomationCommand.ADMIN_PERMISSION)) {
             player.sendMessage(ChatColor.RED + "You don't own this machine!");
@@ -101,7 +110,9 @@ public class WrenchItem {
             lore = new ArrayList<>();
 
         Map<UpgradeType, Integer> upgrades = machine.getUpgrades();
-        if (!upgrades.isEmpty()) {
+        boolean preserveUpgrades = SimpleAutomation.getInstance().getConfig()
+                .getBoolean("wrench.preserve-upgrades", true);
+        if (preserveUpgrades && !upgrades.isEmpty()) {
             // Visible, human-readable summary only. This lore is purely cosmetic; the
             // authoritative upgrade data lives in the PDC below and is what gets read
             // back on placement, so editing these lines does nothing.
@@ -148,7 +159,9 @@ public class WrenchItem {
                 try {
                     UpgradeType type = UpgradeType.valueOf(parts[0]);
                     int level = Integer.parseInt(parts[1]);
-                    upgrades.put(type, level);
+                    if (level > 0 && level <= type.getMaxLevel()) {
+                        upgrades.put(type, level);
+                    }
                 } catch (Exception ignored) {
                     // Malformed or outdated upgrade entry, skip it.
                 }

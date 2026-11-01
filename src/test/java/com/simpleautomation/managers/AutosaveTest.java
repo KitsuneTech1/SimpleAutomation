@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.world.WorldMock;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
 
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Bug 4: machines were only written to disk onDisable, so a crash lost everything. The
- * manager now tracks a dirty flag and exposes flush() (also driven by a periodic async
+ * manager now tracks a dirty flag and exposes flush() (also driven by a periodic
  * autosave). This test creates a machine, flushes, reloads a fresh manager and asserts it
  * persisted with its upgrades intact.
  */
@@ -93,5 +94,18 @@ class AutosaveTest {
         reloaded.loadMachines();
         assertEquals(0, reloaded.getMachineCount(),
                 "An invalid machine was resurrected from stale saved data");
+    }
+
+    @Test
+    void autosaveUsesTheServerThreadForBukkitState() throws Exception {
+        MachineManager manager = plugin.getMachineManager();
+        manager.startAutosave();
+
+        var field = MachineManager.class.getDeclaredField("autosaveTask");
+        field.setAccessible(true);
+        BukkitTask task = (BukkitTask) field.get(manager);
+
+        assertNotNull(task);
+        assertTrue(task.isSync(), "Autosave must not serialize Bukkit state off the server thread");
     }
 }

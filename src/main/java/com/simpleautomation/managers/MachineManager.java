@@ -58,9 +58,9 @@ public class MachineManager {
     }
 
     /**
-     * Starts the background autosave loop. Runs asynchronously on the configured
-     * interval and only writes when something actually changed, so a crash loses at
-     * most one interval of work instead of everything since the last shutdown.
+     * Starts the autosave loop on the server thread. Bukkit block and inventory state is
+     * not safe to serialize concurrently with machine ticks, so the save itself must stay
+     * synchronous even though it is only scheduled periodically.
      */
     public void startAutosave() {
         if (autosaveTask != null) {
@@ -72,7 +72,7 @@ public class MachineManager {
         }
         long ticks = seconds * 20L;
         autosaveTask = plugin.getServer().getScheduler()
-                .runTaskTimerAsynchronously(plugin, this::flush, ticks, ticks);
+                .runTaskTimer(plugin, this::flush, ticks, ticks);
     }
 
     public void stopAutosave() {
@@ -83,8 +83,8 @@ public class MachineManager {
     }
 
     /**
-     * Writes machines to disk only if there are unsaved changes. Safe to call from
-     * any thread; the machine maps are concurrent.
+     * Writes machines to disk only if there are unsaved changes. This method is intended
+     * to run on the server thread so machine state is serialized consistently.
      */
     public void flush() {
         if (dirty) {
@@ -106,6 +106,27 @@ public class MachineManager {
 
     public int getMachineCount() {
         return machines.size();
+    }
+
+    public int getMachineCountInChunk(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return 0;
+        }
+
+        int chunkX = location.getBlockX() >> 4;
+        int chunkZ = location.getBlockZ() >> 4;
+        String worldName = location.getWorld().getName();
+        int count = 0;
+        for (Machine machine : machines.values()) {
+            Location machineLocation = machine.getLocation();
+            if (machineLocation.getWorld() != null
+                    && worldName.equals(machineLocation.getWorld().getName())
+                    && (machineLocation.getBlockX() >> 4) == chunkX
+                    && (machineLocation.getBlockZ() >> 4) == chunkZ) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public void tickAllMachines() {
@@ -213,8 +234,8 @@ public class MachineManager {
 
         BlockFace facing = BlockFace.valueOf(section.getString("facing", "NORTH"));
         // Machines saved before ownership tracking have no owner field. Rather than dropping
-        // them, load them ownerless; an ownerless machine is grandfathered as always allowed
-        // by the build-access gate (see Machine.canAffect).
+        // them, load them ownerless; the build-access gate denies their automated actions
+        // until an administrator migrates ownership or disables that gate explicitly.
         String ownerStr = section.getString("owner");
         UUID owner = ownerStr != null ? UUID.fromString(ownerStr) : null;
 
@@ -244,8 +265,16 @@ public class MachineManager {
                 tf.loadState(section);
                 yield tf;
             }
-            case CROP_FARMER -> new CropFarmer(id, location, facing, owner, upgrades);
-            case BLOCK_MINER -> new BlockMiner(id, location, facing, owner, upgrades);
+            case CROP_FARMER -> {
+                CropFarmer farmer = new CropFarmer(id, location, facing, owner, upgrades);
+                farmer.loadBaseState(section);
+                yield farmer;
+            }
+            case BLOCK_MINER -> {
+                BlockMiner miner = new BlockMiner(id, location, facing, owner, upgrades);
+                miner.loadBaseState(section);
+                yield miner;
+            }
         };
     }
 }

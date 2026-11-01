@@ -149,9 +149,9 @@ public class ConveyorBelt extends Machine {
             }
 
             // Check for next conveyor (handled by manager, just let item continue)
-            ConveyorBelt nextBelt = (ConveyorBelt) SimpleAutomation.getInstance()
+            Machine nextMachine = SimpleAutomation.getInstance()
                     .getMachineManager().getMachineAt(nextBlock.getLocation());
-            if (nextBelt != null) {
+            if (nextMachine instanceof ConveyorBelt) {
                 return false;
             }
         }
@@ -189,6 +189,7 @@ public class ConveyorBelt extends Machine {
             BlockFace newFacing = directions[(currentIndex + 1) % 4];
             directional.setFacing(newFacing);
             block.setBlockData(directional);
+            setFacing(newFacing);
         }
     }
 

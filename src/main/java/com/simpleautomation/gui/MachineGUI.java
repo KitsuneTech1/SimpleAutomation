@@ -1,6 +1,7 @@
 package com.simpleautomation.gui;
 
 import com.simpleautomation.SimpleAutomation;
+import com.simpleautomation.listeners.PlacementListener;
 import com.simpleautomation.machines.Machine;
 import com.simpleautomation.machines.MachineType;
 import com.simpleautomation.upgrades.UpgradeType;
@@ -62,6 +63,21 @@ public class MachineGUI {
 
         event.setCancelled(true);
 
+        SimpleAutomation plugin = SimpleAutomation.getInstance();
+        Machine current = plugin.getMachineManager().getMachine(machine.getId());
+        if (current != machine || !machine.isValid()
+                || !player.hasPermission(PlacementListener.USE_PERMISSION)) {
+            openGUIs.remove(player.getUniqueId());
+            player.closeInventory();
+            return;
+        }
+
+        // The bottom inventory is the player's inventory. It is locked while this GUI is
+        // open, but it must never be interpreted as an upgrade button.
+        if (event.getClickedInventory() != event.getView().getTopInventory()) {
+            return;
+        }
+
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || !clicked.hasItemMeta() || !clicked.getItemMeta().hasDisplayName()) {
             return;
@@ -103,9 +119,13 @@ public class MachineGUI {
             return;
         }
 
-        String[] parts = costString.split(":");
-        Material costMaterial = Material.valueOf(parts[0]);
-        int costAmount = Integer.parseInt(parts[1]);
+        UpgradeCost cost = parseUpgradeCost(costString);
+        if (cost == null) {
+            player.sendMessage(ChatColor.RED + "Upgrade unavailable due to invalid configuration.");
+            return;
+        }
+        Material costMaterial = cost.material();
+        int costAmount = cost.amount();
 
         if (!hasItems(player, costMaterial, costAmount)) {
             String prefix = SimpleAutomation.getInstance().getConfig().getString("messages.prefix",
@@ -140,6 +160,32 @@ public class MachineGUI {
 
         String upgradeKey = upgrade.name().toLowerCase().replace("_", "-");
         return machineKey + ".upgrades." + upgradeKey + ".level-" + level;
+    }
+
+    static UpgradeCost parseUpgradeCost(String costString) {
+        if (costString == null) {
+            return null;
+        }
+
+        String[] parts = costString.split(":", -1);
+        if (parts.length != 2) {
+            return null;
+        }
+
+        Material material = Material.matchMaterial(parts[0].trim());
+        if (material == null) {
+            return null;
+        }
+
+        try {
+            int amount = Integer.parseInt(parts[1].trim());
+            return amount > 0 ? new UpgradeCost(material, amount) : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    record UpgradeCost(Material material, int amount) {
     }
 
     private static boolean hasItems(Player player, Material material, int amount) {
@@ -211,12 +257,16 @@ public class MachineGUI {
         } else {
             String configPath = getUpgradeConfigPath(machineType, upgrade, currentLevel + 1);
             String costString = SimpleAutomation.getInstance().getConfig().getString(configPath, "IRON_INGOT:8");
-            String[] parts = costString.split(":");
-            String materialName = parts[0].replace("_", " ").toLowerCase();
-            materialName = Character.toUpperCase(materialName.charAt(0)) + materialName.substring(1);
+            UpgradeCost cost = parseUpgradeCost(costString);
+            if (cost == null) {
+                lore.add("§cUpgrade unavailable");
+            } else {
+                String materialName = cost.material().name().replace("_", " ").toLowerCase();
+                materialName = Character.toUpperCase(materialName.charAt(0)) + materialName.substring(1);
 
-            lore.add("§eClick to upgrade!");
-            lore.add("§7Cost: §f" + parts[1] + "x " + materialName);
+                lore.add("§eClick to upgrade!");
+                lore.add("§7Cost: §f" + cost.amount() + "x " + materialName);
+            }
         }
 
         ItemStack item = new ItemStack(icon);

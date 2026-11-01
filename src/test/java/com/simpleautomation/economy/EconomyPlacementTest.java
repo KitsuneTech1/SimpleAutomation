@@ -126,12 +126,60 @@ class EconomyPlacementTest {
                 "Balance was charged even though economy is disabled");
     }
 
+    @Test
+    void failedWithdrawalBlocksPlacement() {
+        plugin.getConfig().set("economy.enabled", true);
+        WorldMock world = server.addSimpleWorld("world");
+        PlayerMock player = server.addPlayer();
+        double cost = plugin.getConfig().getDouble("quarry.place-cost");
+        economy.set(player, cost + 200.0);
+        economy.setWithdrawFailure(true);
+
+        BlockPlaceEvent event = quarryPlaceEvent(world, player);
+        listener.onBlockPlace(event);
+
+        assertTrue(event.isCancelled(), "Placement proceeded after the economy rejected withdrawal");
+        assertNull(plugin.getMachineManager().getMachineAt(new Location(world, 0, 64, 0)),
+                "A machine was registered after the economy rejected withdrawal");
+        assertEquals(cost + 200.0, economy.getBalance(player), 0.0001,
+                "A failed withdrawal changed the player's balance");
+    }
+
+    @Test
+    void negativeConfiguredCostIsRejected() {
+        plugin.getConfig().set("economy.enabled", true);
+        PlayerMock player = server.addPlayer();
+
+        assertEquals(EconomyHook.Result.FAILED,
+                plugin.getEconomyHook().charge(player, -1.0),
+                "A negative configured cost must not become a free purchase");
+    }
+
+    @Test
+    void enabledEconomyWithoutAProviderBlocksPlacement() {
+        plugin.getConfig().set("economy.enabled", true);
+        server.getServicesManager().unregister(economy);
+        WorldMock world = server.addSimpleWorld("world");
+        PlayerMock player = server.addPlayer();
+
+        BlockPlaceEvent event = quarryPlaceEvent(world, player);
+        listener.onBlockPlace(event);
+
+        assertTrue(event.isCancelled(), "Placement was free when the enabled economy provider was missing");
+        assertNull(plugin.getMachineManager().getMachineAt(new Location(world, 0, 64, 0)));
+    }
+
     /** Minimal in-memory Vault economy keyed by player name; only the used methods do real work. */
     static class FakeEconomy implements Economy {
         private final Map<String, Double> balances = new HashMap<>();
+        private boolean withdrawFailure;
 
         void set(OfflinePlayer player, double amount) {
             balances.put(player.getName(), amount);
+        }
+
+        void setWithdrawFailure(boolean withdrawFailure) {
+            this.withdrawFailure = withdrawFailure;
         }
 
         private double bal(OfflinePlayer player) {
@@ -150,6 +198,10 @@ class EconomyPlacementTest {
 
         @Override
         public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
+            if (withdrawFailure) {
+                return new EconomyResponse(0, bal(player), EconomyResponse.ResponseType.FAILURE,
+                        "withdrawal rejected");
+            }
             double newBal = bal(player) - amount;
             balances.put(player.getName(), newBal);
             return new EconomyResponse(amount, newBal, EconomyResponse.ResponseType.SUCCESS, null);

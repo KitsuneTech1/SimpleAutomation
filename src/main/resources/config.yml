@@ -8,8 +8,8 @@ general:
   tick-interval: 10
   # Maximum machines per chunk
   max-machines-per-chunk: 16
-  # How often (seconds) to autosave machine data in the background. Only writes when
-  # something changed. Set to 0 to disable and rely on save-on-shutdown only.
+  # How often (seconds) to autosave machine data. Only writes when something changed.
+  # Set to 0 to disable and rely on save-on-shutdown only.
   autosave-interval: 60
   # Enable debug messages
   debug: false
@@ -30,8 +30,8 @@ require-build-access: true
 economy:
   # When true AND a Vault economy is installed, placing a machine charges its
   # per-machine place-cost (below). When false (default) machines cost only their
-  # crafting materials. If this is enabled but no economy plugin is present, the
-  # charge is skipped and a warning is logged.
+  # crafting materials. If this is enabled but no economy plugin is present, placement
+  # is blocked and a warning is logged.
   enabled: false
 
 # ===============================================
@@ -224,6 +224,8 @@ messages:
   no-permission: "&cYou don't have permission to do that!"
   insufficient-funds: "&cYou need &f%cost%&c to place a %machine%!"
   no-build-access: "&cThat machine cannot build where its owner has no permission!"
+  machine-limit: "&cThis chunk already has the maximum number of machines!"
+  economy-error: "&cThe economy could not complete this purchase."
   upgrade-success: "&aUpgrade applied! %upgrade% is now level %level%"
   upgrade-fail: "&cNot enough materials for this upgrade!"
   fuel-empty: "&eYour %machine% is out of fuel!"

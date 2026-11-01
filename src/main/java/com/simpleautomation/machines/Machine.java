@@ -13,6 +13,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -27,7 +29,7 @@ public abstract class Machine {
 
     protected final UUID id;
     protected final Location location;
-    protected final BlockFace facing;
+    protected BlockFace facing;
     protected final UUID owner;
     protected final Map<UpgradeType, Integer> upgrades;
     protected MachineStatus status;
@@ -69,7 +71,10 @@ public abstract class Machine {
         this.location = location.clone();
         this.facing = facing;
         this.owner = owner;
-        this.upgrades = new EnumMap<>(upgrades);
+        this.upgrades = new EnumMap<>(UpgradeType.class);
+        for (Map.Entry<UpgradeType, Integer> entry : upgrades.entrySet()) {
+            setUpgradeLevel(entry.getKey(), entry.getValue());
+        }
         this.status = MachineStatus.IDLE;
         this.tickCounter = 0;
         this.fuelStored = 0;
@@ -93,6 +98,10 @@ public abstract class Machine {
         return facing;
     }
 
+    protected void setFacing(BlockFace facing) {
+        this.facing = facing;
+    }
+
     public UUID getOwner() {
         return owner;
     }
@@ -109,7 +118,7 @@ public abstract class Machine {
         if (level <= 0) {
             upgrades.remove(type);
         } else {
-            upgrades.put(type, level);
+            upgrades.put(type, Math.min(level, type.getMaxLevel()));
         }
     }
 
@@ -281,19 +290,19 @@ public abstract class Machine {
      * chest.
      *
      * <p>The owner is resolved to an online {@link Player}; if the owner is offline (or the
-     * machine was migrated with no owner) we cannot run a live probe, so we allow the
-     * action rather than freezing every machine whenever its owner logs off.
+     * machine was migrated with no owner) we cannot run a live probe, so we deny the
+     * action until the owner is online and can be checked.
      */
     protected boolean canAffect(Block block) {
         if (!SimpleAutomation.getInstance().getConfig().getBoolean("require-build-access", true)) {
             return true;
         }
         if (owner == null) {
-            return true;
+            return false;
         }
         Player ownerPlayer = Bukkit.getPlayer(owner);
         if (ownerPlayer == null) {
-            return true;
+            return false;
         }
 
         probing = true;
@@ -301,6 +310,33 @@ public abstract class Machine {
             BlockBreakEvent probe = new BlockBreakEvent(block, ownerPlayer);
             Bukkit.getPluginManager().callEvent(probe);
             return !probe.isCancelled();
+        } finally {
+            probing = false;
+        }
+    }
+
+    /**
+     * Build-access probe for an automated placement. Break and place permissions are not
+     * interchangeable in protection plugins, so planting uses a real BlockPlaceEvent probe.
+     */
+    protected boolean canPlace(Block block, Block against, ItemStack item) {
+        if (!SimpleAutomation.getInstance().getConfig().getBoolean("require-build-access", true)) {
+            return true;
+        }
+        if (owner == null) {
+            return false;
+        }
+        Player ownerPlayer = Bukkit.getPlayer(owner);
+        if (ownerPlayer == null) {
+            return false;
+        }
+
+        probing = true;
+        try {
+            BlockPlaceEvent probe = new BlockPlaceEvent(block, block.getState(), against, item,
+                    ownerPlayer, true, EquipmentSlot.HAND);
+            Bukkit.getPluginManager().callEvent(probe);
+            return !probe.isCancelled() && probe.canBuild();
         } finally {
             probing = false;
         }

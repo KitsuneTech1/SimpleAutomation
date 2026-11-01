@@ -142,7 +142,10 @@ public class Quarry extends Machine {
 
     private boolean mineCurrentBlock() {
         World world = location.getWorld();
-        if (currentY < world.getMinHeight()) {
+        int maxDepth = Math.max(0,
+                SimpleAutomation.getInstance().getConfig().getInt("quarry.max-depth", 64));
+        int minimumY = Math.max(world.getMinHeight(), location.getBlockY() - maxDepth);
+        if (currentY < minimumY) {
             status = MachineStatus.IDLE;
             return false;
         }
@@ -164,7 +167,7 @@ public class Quarry extends Machine {
         }
 
         boolean hasVoidFilter = getUpgradeLevel(UpgradeType.VOID_FILTER) > 0;
-        if (hasVoidFilter && VOID_FILTER_MATERIALS.contains(block.getType())) {
+        if (hasVoidFilter && isVoidFiltered(block.getType())) {
             block.setType(Material.AIR);
             spawnVoidParticles(block.getLocation());
             return true;
@@ -181,6 +184,21 @@ public class Quarry extends Machine {
 
         playSound(Sound.BLOCK_STONE_BREAK, 0.3f, 1.0f);
         return true;
+    }
+
+    boolean isVoidFiltered(Material material) {
+        List<String> configured = SimpleAutomation.getInstance()
+                .getConfig().getStringList("quarry.void-filter-blocks");
+        if (configured.isEmpty()) {
+            return VOID_FILTER_MATERIALS.contains(material);
+        }
+        for (String name : configured) {
+            Material configuredMaterial = Material.matchMaterial(name);
+            if (configuredMaterial == material) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void advancePosition() {
