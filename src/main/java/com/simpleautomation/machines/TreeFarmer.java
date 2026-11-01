@@ -55,15 +55,19 @@ public class TreeFarmer extends Machine {
             return;
         }
 
-        int checkInterval = SimpleAutomation.getInstance().getConfig().getInt("tree-farmer.check-interval", 100);
+        int checkInterval = Math.max(1,
+                SimpleAutomation.getInstance().getConfig().getInt("tree-farmer.check-interval", 100));
         int harvestSpeed = SimpleAutomation.getInstance().getConfig().getInt("tree-farmer.harvest-speed", 5);
         int speedLevel = getUpgradeLevel(UpgradeType.SPEED);
         harvestSpeed = Math.max(1, harvestSpeed - speedLevel);
 
-        if (harvesting && !blocksToHarvest.isEmpty()) {
+        if (harvesting) {
             status = MachineStatus.RUNNING;
 
-            if (tickCounter % harvestSpeed == 0 && harvestNextBlock()) {
+            if (blocksToHarvest.isEmpty()) {
+                harvesting = false;
+                replantSapling();
+            } else if (tickCounter % harvestSpeed == 0 && harvestNextBlock()) {
                 consumeFuel();
             }
 
@@ -227,11 +231,6 @@ public class TreeFarmer extends Machine {
             return;
         }
 
-        // Respect claims/protection: only replant where the owner is allowed to build.
-        if (!canAffect(plantBlock)) {
-            return;
-        }
-
         var inv = findAdjacentInventory();
         if (inv == null) {
             return;
@@ -241,6 +240,9 @@ public class TreeFarmer extends Machine {
             ItemStack item = inv.getItem(i);
             if (item != null && SAPLING_MATERIALS.contains(item.getType())) {
                 Material saplingType = item.getType();
+                if (!canPlace(plantBlock, soilBlock, new ItemStack(saplingType))) {
+                    return;
+                }
                 plantBlock.setType(saplingType);
 
                 if (item.getAmount() > 1) {

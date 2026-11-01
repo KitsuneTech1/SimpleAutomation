@@ -34,6 +34,7 @@ class QuarrySpeedTest {
     void setUp() {
         server = MockBukkit.mock();
         plugin = MockBukkit.load(SimpleAutomation.class);
+        plugin.getConfig().set("require-build-access", false);
     }
 
     @AfterEach

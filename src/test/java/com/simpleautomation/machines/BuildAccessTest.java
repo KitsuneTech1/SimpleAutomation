@@ -19,6 +19,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockbukkit.mockbukkit.world.WorldMock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 /**
  * Grief / ownership protection: a machine may only break a block where its OWNER has build
@@ -96,5 +97,25 @@ class BuildAccessTest {
 
         assertEquals(Material.AIR, world.getBlockAt(0, 64, -1).getType(),
                 "Machine failed to mine a block its owner is allowed to break");
+    }
+
+    @Test
+    void machineDoesNotAffectBlocksWhenOwnerIsOffline() {
+        WorldMock world = server.addSimpleWorld("world");
+        world.getBlockAt(0, 64, -1).setType(Material.STONE);
+        world.getBlockAt(1, 64, 0).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(1, 64, 0).getState();
+        chest.getBlockInventory().addItem(new ItemStack(Material.COAL, 64));
+
+        BlockMiner miner = new BlockMiner(new Location(world, 0, 64, 0), BlockFace.NORTH,
+                java.util.UUID.randomUUID());
+
+        assertDoesNotThrow(() -> {
+            for (int i = 0; i < 200; i++) {
+                miner.tick();
+            }
+        });
+        assertEquals(Material.STONE, world.getBlockAt(0, 64, -1).getType(),
+                "An offline owner caused a machine to bypass the build-access gate");
     }
 }

@@ -59,7 +59,7 @@ public class SimpleAutomation extends JavaPlugin {
     }
     
     private void startMachineTick() {
-        int interval = getConfig().getInt("general.tick-interval", 10);
+        int interval = Math.max(1, getConfig().getInt("general.tick-interval", 10));
         getServer().getScheduler().runTaskTimer(this, () -> {
             machineManager.tickAllMachines();
             conveyorManager.tick();

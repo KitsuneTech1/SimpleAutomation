@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +40,11 @@ public class PlacementListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
-        if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
+        if (!item.hasItemMeta()) {
             return;
         }
 
-        String name = item.getItemMeta().getDisplayName();
-        MachineType type = getMachineType(name);
+        MachineType type = getMachineType(item);
 
         if (type == null) {
             return;
@@ -60,6 +60,15 @@ public class PlacementListener implements Listener {
             return;
         }
 
+        int maxMachines = plugin.getConfig().getInt("general.max-machines-per-chunk", 16);
+        int machinesInChunk = plugin.getMachineManager().getMachineCountInChunk(block.getLocation());
+        if (maxMachines < 1 || machinesInChunk >= maxMachines) {
+            event.setCancelled(true);
+            sendConfigMessage(player, "messages.machine-limit",
+                    "&cThis chunk already has the maximum number of machines!", type);
+            return;
+        }
+
         // Economy: optionally charge money to place. Blocks placement if the owner cannot
         // afford it; a disabled economy or a missing provider is a no-op (SKIPPED).
         EconomyHook eco = plugin.getEconomyHook();
@@ -70,6 +79,12 @@ public class PlacementListener implements Listener {
             sendConfigMessage(player,
                     "messages.insufficient-funds", "&cYou need &f%cost%&c to place a %machine%!", type,
                     "%cost%", costText);
+            return;
+        }
+        if (charge == EconomyHook.Result.FAILED) {
+            event.setCancelled(true);
+            sendConfigMessage(player, "messages.economy-error",
+                    "&cThe economy could not complete this purchase.", type);
             return;
         }
 
@@ -162,14 +177,13 @@ public class PlacementListener implements Listener {
 
     /** True if the stack is one of our custom machine items or the automation wrench. */
     private boolean isPluginItem(ItemStack stack) {
-        if (stack == null || !stack.hasItemMeta() || !stack.getItemMeta().hasDisplayName()) {
+        if (stack == null || !stack.hasItemMeta()) {
             return false;
         }
-        String name = stack.getItemMeta().getDisplayName();
-        if (name.equals(WrenchItem.WRENCH_NAME)) {
+        if (WrenchItem.isWrench(stack)) {
             return true;
         }
-        return getMachineType(name) != null;
+        return getMachineType(stack) != null;
     }
 
     /**
@@ -188,13 +202,19 @@ public class PlacementListener implements Listener {
         player.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + msg));
     }
 
-    private MachineType getMachineType(String displayName) {
-        for (MachineType type : MachineType.values()) {
-            if (displayName.equals(type.getItemName())) {
-                return type;
-            }
+    private MachineType getMachineType(ItemStack item) {
+        String typeName = item.getItemMeta().getPersistentDataContainer()
+                .get(machineTypeKey(), PersistentDataType.STRING);
+        if (typeName == null) {
+            return null;
         }
-        return null;
+
+        try {
+            MachineType type = MachineType.valueOf(typeName);
+            return item.getType() == type.getBlockMaterial() ? type : null;
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private BlockFace getPlayerFacing(Player player) {
@@ -227,6 +247,7 @@ public class PlacementListener implements Listener {
         ItemStack item = new ItemStack(type.getBlockMaterial());
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(type.getItemName());
+        meta.getPersistentDataContainer().set(machineTypeKey(), PersistentDataType.STRING, type.name());
 
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + "Right-click to place");
@@ -263,5 +284,9 @@ public class PlacementListener implements Listener {
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private static org.bukkit.NamespacedKey machineTypeKey() {
+        return new org.bukkit.NamespacedKey(SimpleAutomation.getInstance(), "machine_type");
     }
 }

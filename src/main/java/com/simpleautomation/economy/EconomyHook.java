@@ -3,6 +3,7 @@ package com.simpleautomation.economy;
 import com.simpleautomation.SimpleAutomation;
 import com.simpleautomation.machines.MachineType;
 import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -14,7 +15,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
  * <p>The economy provider is resolved lazily on first use rather than cached at enable, so
  * it works regardless of plugin load order and so nothing touches the Vault classes at all
  * when the feature is left disabled (the default). If the feature is enabled but no economy
- * is present, charging is skipped and a one-time warning is logged.
+ * is present, the charge fails closed and a one-time warning is logged.
  */
 public class EconomyHook {
 
@@ -23,7 +24,9 @@ public class EconomyHook {
         SUCCESS,
         /** The player could not afford the cost; the action must be blocked. */
         INSUFFICIENT,
-        /** No charge was applied (feature disabled, or enabled with no economy present). */
+        /** The economy provider rejected or could not complete the withdrawal. */
+        FAILED,
+        /** No charge was applied because the feature is disabled. */
         SKIPPED
     }
 
@@ -62,19 +65,22 @@ public class EconomyHook {
         if (eco == null) {
             if (!warnedNoEconomy) {
                 plugin.getLogger().warning(
-                        "economy.enabled is true but no Vault economy is installed; skipping charges.");
+                        "economy.enabled is true but no Vault economy is installed; blocking charges.");
                 warnedNoEconomy = true;
             }
-            return Result.SKIPPED;
+            return Result.FAILED;
         }
-        if (amount <= 0) {
+        if (!Double.isFinite(amount) || amount < 0) {
+            return Result.FAILED;
+        }
+        if (amount == 0) {
             return Result.SUCCESS;
         }
         if (!eco.has(player, amount)) {
             return Result.INSUFFICIENT;
         }
-        eco.withdrawPlayer(player, amount);
-        return Result.SUCCESS;
+        EconomyResponse response = eco.withdrawPlayer(player, amount);
+        return response != null && response.transactionSuccess() ? Result.SUCCESS : Result.FAILED;
     }
 
     private Economy resolve() {

@@ -48,7 +48,8 @@ public class CropFarmer extends Machine {
             return;
         }
 
-        int checkInterval = SimpleAutomation.getInstance().getConfig().getInt("crop-farmer.check-interval", 60);
+        int checkInterval = Math.max(1,
+                SimpleAutomation.getInstance().getConfig().getInt("crop-farmer.check-interval", 60));
         int speedLevel = getUpgradeLevel(UpgradeType.SPEED);
         int harvestDelay = Math.max(1, 3 - speedLevel);
 
