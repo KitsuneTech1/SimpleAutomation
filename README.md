@@ -4,6 +4,7 @@
 
 A Paper plugin that adds placeable, upgradeable automation machines including quarries, farms, and utility blocks.
 
+[![Build Status](https://github.com/KitsuneTech1/SimpleAutomation/actions/workflows/ci.yml/badge.svg)](https://github.com/KitsuneTech1/SimpleAutomation/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-brightgreen.svg)
 ![Spigot](https://img.shields.io/badge/Spigot%2FPaper-API-orange.svg)
@@ -25,6 +26,21 @@ All machine placement and state persists across server restarts.
 - **Wrench** - picks machines up without losing upgrades.
 
 Each machine has a GUI to view status and apply upgrades.
+
+
+## Architecture & Mechanics
+
+```mermaid
+flowchart TD
+    A[Craft or Place Automation Machine: Quarry, Miner, Tree/Crop Farmer, Conveyor] --> B[Initialize Machine State & Fuel Chamber]
+    B --> C[Server Tick Loop: Check Fuel]
+    C -->|Has Fuel| D[Execute Machine Task: Harvest, Mine, or Transport]
+    C -->|No Fuel| E[Pause Machine & Emit Idle Indicator]
+    D --> F[Route Mined/Harvested Items to Adjacent Chests or Conveyors]
+    G[Player Right-Clicks Machine] --> H[Open Machine Upgrade GUI]
+    H --> I[Apply Upgrades: Speed, Range, Fortune, Silk Touch, Void Filter]
+    J[Use Wrench on Machine] --> K[Dismantle Machine & Drop Item Retaining Upgrades]
+```
 
 ## Commands
 
